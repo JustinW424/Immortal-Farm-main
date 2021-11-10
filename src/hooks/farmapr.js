@@ -13,11 +13,11 @@ export const getFarmApr = (
   ftmPriceUsd,
   poolLiquidityUsd,
 ) => {
-  // console.log("farming info : ", poolWeight, ftmPriceUsd, poolLiquidityUsd)
-  // const yearlyFtmRewardAllocation = poolWeight ? BigNumber(poolWeight).multiply(FTM_PER_YEAR) : new BigNumber(NaN)
-  // const FtmRewardsApr = BigNumber(yearlyFtmRewardAllocation).multiply(ftmPriceUsd).div(poolLiquidityUsd).div(1e20)
+  console.log("farming info : ", poolWeight, ftmPriceUsd, poolLiquidityUsd)
+  const yearlyFtmRewardAllocation = poolWeight * FTM_PER_YEAR
+  const FtmRewardsApr = yearlyFtmRewardAllocation * ftmPriceUsd / poolLiquidityUsd
 
-  // return (Number(FtmRewardsApr) / 1e10)
+  return (FtmRewardsApr)
 }
 
 export default null

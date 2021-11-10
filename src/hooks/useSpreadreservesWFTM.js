@@ -8,9 +8,9 @@ export default function useSpreadreservesWFTM(contract) {
   
     if (Array.isArray(allReserves)) {
       if (BlockAddress === "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83") 
-        LPPairFTM = parseInt(allReserves[0]._hex) * 2;
+        LPPairFTM = parseInt(allReserves[0]._hex) / 1e18 * 2;
       else
-        LPPairFTM = parseInt(allReserves[1]._hex) * 2;
+        LPPairFTM = parseInt(allReserves[1]._hex) / 1e18 * 2;
     }  
   const totalSupply = useSingleCallResult(contract, 'totalSupply', []);
   return {"LPPairFTM": LPPairFTM, "TotalSupply": Number(totalSupply)}

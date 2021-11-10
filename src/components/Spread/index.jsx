@@ -48,6 +48,7 @@ export default function Spread({ type }) {
   const [totalLiquidity, setTotalLiquidity] = useState([]);
   const [apy, setApy] = useState(0);
   const [feesapr1, setFeesapr1] = useState([]);
+  const [processed, setProcessed] = useState(false);
 
   const useContract =
     type === 'A'
@@ -91,24 +92,24 @@ export default function Spread({ type }) {
     (lp4_data['LPPairFTM'] * lp_amount[3]) / lp4_data['TotalSupply'];
 
   const getDataFeeApr = async () => {
-    let temp2 = [];
-    const flag = (spreadLPToken ?? []).includes(null);
-    console.log(flag, 'Flag');
-    if (!flag) {
+    if (spreadLPToken?.filter((e) => e).length === 4 && !processed) {
+      setProcessed(true);
+      let temp1 = [];
+      let temp2 = [];
       await Promise.all(
         Array.from(Array(4).keys()).map(async (index) => {
           const response = await axios.get(
             `https://api.covalenthq.com/v1/250/xy=k/spiritswap/pools/address/${spreadLPToken[index]}/?key=ckey_4e30f83f47a14c799789e95153b`,
           );
-          //   console.log(response.data, 'res');
+          console.log('ressssssssssssssssssssss', response.data);
           if (response.status === 200) {
             const mulcon = (365 * 100 * 5) / 6;
-            setFeesapr1([
-              ...feesapr1,
+
+            temp1.push(
               (response.data.data.items[0].fee_24h_quote /
                 response.data.data.items[0].total_liquidity_quote) *
                 mulcon,
-            ]);
+            );
             temp2 = [
               ...temp2,
               response.data.data.items[0].total_liquidity_quote,
@@ -116,36 +117,22 @@ export default function Spread({ type }) {
           }
         }),
       );
+      setFeesapr(temp1);
+      setTotalLiquidity(temp2);
     }
-    setFeesapr(feesapr1);
-    setTotalLiquidity(temp2);
-    console.log(feesapr1, temp2, 'temp2');
   };
 
   useEffect(() => {
-    // console.log(spreadLPToken, 'spreadLPToken');
     getDataFeeApr();
     calcApy();
   }, [spreadLPToken]);
-  //   console.log('result fee apr', feesapr);
 
-  let farm1Apr = getFarmApr(weight1, ftm, totalLiquidity[0]);
-  let farm2Apr = getFarmApr(weight2, ftm, totalLiquidity[1]);
-  let farm3Apr = getFarmApr(weight3, ftm, totalLiquidity[2]);
-  let farm4Apr = getFarmApr(weight4, ftm, totalLiquidity[3]);
-
-  //   console.log('result farm apr', farm1Apr, farm2Apr, farm3Apr, farm4Apr);
-
-  farm1Apr = getFarmApr(weight1, ftm, 1000);
-  farm2Apr = getFarmApr(weight2, ftm, 1000);
-  farm3Apr = getFarmApr(weight3, ftm, 1000);
-  farm4Apr = getFarmApr(weight4, ftm, 1000);
+  let farm1Apr = getFarmApr(weight1, ftm / 1e8, totalLiquidity[0]);
+  let farm2Apr = getFarmApr(weight2, ftm / 1e8, totalLiquidity[1]);
+  let farm3Apr = getFarmApr(weight3, ftm / 1e8, totalLiquidity[2]);
+  let farm4Apr = getFarmApr(weight4, ftm / 1e8, totalLiquidity[3]);
 
   const calcApy = () => {
-    // let LPAPR1 = BigNumber(farm1Apr).add(feesapr[0]);
-    // let LPAPR2 = BigNumber(farm2Apr).add(feesapr[1]);
-    // let LPAPR3 = BigNumber(farm3Apr).add(feesapr[2]);
-    // let LPAPR4 = BigNumber(farm4Apr).add(feesapr[3]);
     let LPAPR1 = feesapr[0] + farm1Apr;
     let LPAPR2 = feesapr[1] + farm2Apr;
     let LPAPR3 = feesapr[2] + farm3Apr;
@@ -156,15 +143,8 @@ export default function Spread({ type }) {
         LPAPR3 * weight3 +
         LPAPR4 * weight4) /
       (weight1 + weight2 + weight3 + weight4);
-    console.log('total ------------------------------------------', TotalAPR);
-
     let N = 31536000 / (30 * 60);
-    console.log('N ------------------------------------------', N);
-    console.log(
-      'APY -------------------------- ',
-      (Math.pow(1 + TotalAPR / N, N) - 1) / 1e9,
-    );
-    setApy((Math.pow(1 + TotalAPR / N, N) - 1) / 1e9);
+    setApy(((Math.pow(1 + TotalAPR / N, N) - 1) * ftm) / 1e14);
   };
 
   const { account, library } = useWeb3React();
@@ -420,11 +400,7 @@ export default function Spread({ type }) {
       </Typography>
       <Box display="flex" alignItems="center">
         <Typography fontWeight="400" color="common.white">
-          &nbsp; {apy} &nbsp;{' '}
-        </Typography>
-
-        <Typography fontWeight="bold" fontSize="small" color="secondary.main">
-          %
+          &nbsp; {apy ? apy : 'Please Wait...'} &nbsp;{apy ? ' %' : ''}
         </Typography>
       </Box>
     </Box>
